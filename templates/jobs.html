@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+
+{% block title %}Recommended Jobs — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Search Summary Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">Recommended Jobs For You</h2>
+      <div class="text-muted small d-flex flex-wrap align-items-center gap-2">
+        <span><i class="bi bi-file-earmark-person"></i> Resume: <strong>{{ analysis.filename }}</strong></span>
+        <span>&bull;</span>
+        <span>
+          <i class="bi bi-geo"></i> Detected from Resume: 
+          <strong>{{ candidate_location or 'Not detected' }}</strong>
+        </span>
+        <span>&bull;</span>
+        <span>
+          <i class="bi bi-geo-alt-fill text-danger"></i> Current Job Search Location: 
+          <strong class="text-dark">{{ location }}</strong>
+          {% if is_user_override %}
+            <span class="badge bg-warning-light text-dark border border-warning-subtle small ms-1">[User override]</span>
+          {% endif %}
+        </span>
+        <span>&bull;</span>
+        <span><i class="bi bi-search"></i> Role Query: <strong>{{ role_query }}</strong></span>
+      </div>
+      <div class="small text-muted mt-1">
+        <i class="bi bi-shield-check text-success me-1"></i> Jobs are strictly filtered for <strong>{{ location }}</strong>. Eligible remote opportunities are also shown.
+      </div>
+    </div>
+    
+    <div class="mt-2 mt-md-0 d-flex align-items-center gap-2">
+      <!-- Data source indicator -->
+      {% if is_demo_mode %}
+        <span class="demo-data-badge" title="External API is unavailable or offline; using local testing dataset">
+          <i class="bi bi-cone-striped me-1"></i> DEMO DATA — NOT LIVE JOB OPENINGS
+        </span>
+      {% else %}
+        <span class="live-data-badge" title="Live job openings fetched from legitimate public external job provider">
+          <i class="bi bi-broadcast me-1"></i> LIVE JOB OPENINGS &bull; {{ source_name }}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Decision-Support Disclaimer Banner -->
+  <div class="disclaimer-banner">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-info-circle-fill text-primary fs-5 flex-shrink-0"></i>
+      <div>
+        <strong>Decision-Support Disclaimer:</strong> This system uses natural language processing (TF-IDF vectorization and cosine similarity) along with skill taxonomy overlap to rank jobs. Scores represent mathematical relevance to job descriptions and do <strong>not</strong> guarantee employment or determine hiring decisions.
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill Gap Insights Summary Banner -->
+  {% if skill_gaps and skill_gaps.gaps %}
+  <div class="card card-custom mb-4 p-3 bg-light border">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-lightbulb-fill text-warning"></i> Market Skill Gap Highlights (Top Recommended Jobs)
+      </h6>
+      <span class="badge bg-white text-secondary border small">Decision Support</span>
+    </div>
+    <div class="small text-muted mb-2">
+      Skills frequently required by employers in these matching roles that are not yet detected on your resume:
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      {% for gap in skill_gaps.gaps[:6] %}
+        <span class="badge bg-white text-dark border p-2 d-inline-flex align-items-center gap-2 shadow-sm">
+          <span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i></span>
+          <strong>{{ gap.skill }}</strong>
+          <span class="badge bg-warning-light text-dark">{{ gap.demand_percentage }}% of jobs</span>
+        </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filter & Sort Control Bar -->
+  <div class="card card-custom p-3 mb-4">
+    <form action="{{ url_for('jobs.list_jobs') }}" method="GET" class="row g-3 align-items-end">
+      <!-- Role Query Input -->
+      <div class="col-lg-4 col-md-6">
+        <label class="form-label small fw-bold text-muted mb-1">
+          <i class="bi bi-search me-1"></i> Target Role / Keyword
+        </label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-briefcase"></i></span>
+          <input 
+            type="text" 
+            name="role" 
+            id="roleInput"
+            class="form-control" 
+            placeholder="e.g. Frontend Developer, Python Developer" 
+            value="{{ role_query }}" 
+            required
+          />
+        </div>
+      </div>
+
+      <!-- Location Selector -->
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label small fw-bold text-muted mb-1">
+          <i class="bi bi-geo-alt me-1"></i> Job Location
+        </label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-geo-alt-fill text-danger"></i></span>
+          <select name="location" id="locationSelect" class="form-select">
+            {% set popular_locations = ['Bengaluru', 'Hyderabad', 'Chennai', 'Mumbai', 'Pune', 'Delhi', 'Noida', 'Gurugram', 'Remote'] %}
+            {% if location and location not in popular_locations %}
+              <option value="{{ location }}" selected>{{ location }} (Selected)</option>
+            {% endif %}
+            {% for loc in popular_locations %}
+              <option value="{{ loc }}" {% if location == loc %}selected{% endif %}>{{ loc }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Minimum Match Score -->
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <label class="form-label small fw-bold text-muted mb-1">
+          Min Score: <span id="scoreVal" class="text-primary fw-bold">{{ min_score|int }}%</span>
+        </label>
+        <input 
+          type="range" 
+          name="min_score" 
+          id="minScoreRange" 
+          class="form-range" 
+          min="0" 
+          max="100" 
+          step="5" 
+          value="{{ min_score|int }}" 
+          oninput="document.getElementById('scoreVal').innerText = this.value + '%'" 
+        />
+      </div>
+
+      <!-- Job Type Filter -->
+      <div class="col-lg-3 col-md-4 col-sm-6">
+        <label class="form-label small fw-bold text-muted mb-1">
+          <i class="bi bi-clock me-1"></i> Job Type
+        </label>
+        <select name="job_type" id="jobTypeSelect" class="form-select form-select-sm">
+          <option value="All" {% if job_type == 'All' %}selected{% endif %}>All Employment Types</option>
+          <option value="Full-time" {% if job_type == 'Full-time' %}selected{% endif %}>Full-time</option>
+          <option value="Part-time" {% if job_type == 'Part-time' %}selected{% endif %}>Part-time</option>
+          <option value="Contract" {% if job_type == 'Contract' %}selected{% endif %}>Contract</option>
+          <option value="Internship" {% if job_type == 'Internship' %}selected{% endif %}>Internship</option>
+          <option value="Remote" {% if job_type == 'Remote' %}selected{% endif %}>Remote</option>
+        </select>
+      </div>
+
+      <!-- Sort By -->
+      <div class="col-lg-4 col-md-4 col-sm-6">
+        <label class="form-label small fw-bold text-muted mb-1">
+          <i class="bi bi-sort-down me-1"></i> Sort Results By
+        </label>
+        <select name="sort_by" id="sortBySelect" class="form-select form-select-sm">
+          <option value="score" {% if sort_by == 'score' %}selected{% endif %}>Match Score (High to Low)</option>
+          <option value="score_asc" {% if sort_by == 'score_asc' %}selected{% endif %}>Match Score (Low to High)</option>
+          <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Most Recent</option>
+          <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+          <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Job Title (A-Z)</option>
+          <option value="company" {% if sort_by == 'company' %}selected{% endif %}>Company Name (A-Z)</option>
+        </select>
+      </div>
+
+      <!-- Buttons -->
+      <div class="col-lg-8 col-md-8 col-sm-6 d-flex gap-2 justify-content-end">
+        <button type="submit" id="applyFiltersBtn" class="btn btn-primary-custom btn-sm px-4">
+          <i class="bi bi-funnel me-1"></i> Apply &amp; Search
+        </button>
+        {% set reset_role = (analysis.suggested_roles[0] if analysis and analysis.suggested_roles else 'Software Engineer') %}
+        {% set reset_loc = (candidate_location or primary_city or 'Bengaluru') %}
+        <a href="{{ url_for('jobs.list_jobs', role=reset_role, location=reset_loc, min_score=0, job_type='All', sort_by='score') }}" id="resetFiltersBtn" class="btn btn-outline-custom btn-sm" title="Reset all filters to defaults">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Filters
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Results Count Bar -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="small text-muted">
+      Showing <strong>{{ displayed_count }}</strong> of <strong>{{ total_found }}</strong> openings evaluated
+    </div>
+    <div class="small text-muted">
+      <i class="bi bi-check2-square me-1"></i> Select 2 to 4 jobs to compare side-by-side
+    </div>
+  </div>
+
+  <!-- Recommended Jobs Listing -->
+  <div class="row">
+    <div class="col-12">
+      {% if jobs and jobs|length > 0 %}
+        {% for job in jobs %}
+          <div class="job-card">
+            <!-- Checkbox for Comparison -->
+            <div class="form-check position-absolute top-0 end-0 m-3">
+              <input 
+                class="form-check-input compare-job-checkbox" 
+                type="checkbox" 
+                value="{{ job.id }}" 
+                id="compare_{{ job.id }}" 
+                title="Select for comparison"
+              />
+              <label class="form-check-label small text-muted user-select-none" for="compare_{{ job.id }}">
+                Compare
+              </label>
+            </div>
+
+            <!-- Card Header -->
+            <div class="job-card-header pe-5">
+              <div>
+                <h4 class="job-title mb-1">
+                  {% if job.source_url %}
+                    <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="job-title-link" title="Click to view & apply on official job posting">
+                      {{ job.title }}
+                      <i class="bi bi-box-arrow-up-right small text-primary ms-1" style="font-size: 0.82rem;"></i>
+                    </a>
+                  {% else %}
+                    {{ job.title }}
+                  {% endif %}
+                </h4>
+                <div class="job-company mb-2">
+                  <i class="bi bi-building me-1"></i> {{ job.company }}
+                </div>
+                <div>
+                  <span class="job-meta-item">
+                    <i class="bi bi-geo-alt-fill text-danger"></i> Location: <strong>{{ job.location }}</strong>
+                  </span>
+                  <span class="job-meta-item">
+                    {% if job.workplace_type == 'Remote' %}
+                      <span class="badge bg-primary-light text-primary border border-primary-subtle">
+                        <i class="bi bi-laptop me-1"></i> Work Type: Remote
+                      </span>
+                    {% elif job.workplace_type == 'Hybrid' %}
+                      <span class="badge bg-info-subtle text-dark border border-info-subtle">
+                        <i class="bi bi-building-gear me-1"></i> Work Type: Hybrid
+                      </span>
+                    {% else %}
+                      <span class="badge bg-light text-secondary border">
+                        <i class="bi bi-building me-1"></i> Work Type: On-site
+                      </span>
+                    {% endif %}
+                  </span>
+                  <span class="job-meta-item">
+                    <i class="bi bi-briefcase"></i> {{ job.employment_type }}
+                  </span>
+                  <span class="job-meta-item">
+                    <i class="bi bi-clock-history"></i> {{ job.posted_date }}
+                  </span>
+                  <span class="job-meta-item">
+                    <i class="bi bi-link-45deg"></i> Source: {{ job.source_name or job.source }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Match Score Badge -->
+              <div class="text-end">
+                <div class="badge-score {{ job.match_score|score_badge_class }} fs-6">
+                  <i class="bi bi-lightning-fill"></i> {{ job.match_score }}% Match
+                </div>
+                <div class="small text-muted mt-1" style="font-size: 0.76rem;">
+                  Text: {{ job.text_similarity_pct }}% &bull; Skills: {{ job.skill_match_pct }}%
+                </div>
+              </div>
+            </div>
+
+            <!-- Description snippet -->
+            <p class="text-secondary small mb-3">
+              {{ job.description[:260] }}{% if job.description|length > 260 %}...{% endif %}
+            </p>
+
+            <!-- Matched and Missing Skills -->
+            <div class="row g-2 mb-3">
+              <!-- Matched Skills -->
+              <div class="col-md-6">
+                <div class="small fw-semibold text-muted mb-1">
+                  <i class="bi bi-check-circle-fill text-success me-1"></i> Matched Skills ({{ job.matched_skills|length }}):
+                </div>
+                <div>
+                  {% for s in job.matched_skills %}
+                    <span class="skill-tag skill-tag-matched">
+                      <i class="bi bi-check2"></i> {{ s }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted small">No direct dictionary skill overlap</span>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Missing Skills (Skill Gap) -->
+              <div class="col-md-6">
+                <div class="small fw-semibold text-muted mb-1">
+                  <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i> Missing / In-Demand ({{ job.missing_skills|length }}):
+                </div>
+                <div>
+                  {% for s in job.missing_skills %}
+                    <span class="skill-tag skill-tag-missing">
+                      <i class="bi bi-dot"></i> {{ s }}
+                    </span>
+                  {% else %}
+                    <span class="text-success small"><i class="bi bi-award me-1"></i> Fully matched!</span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <a href="{{ url_for('jobs.job_details', job_id=job.id) }}" class="btn btn-outline-custom btn-sm">
+                  <i class="bi bi-info-circle me-1"></i> View Match Details
+                </a>
+
+                <!-- Save Job Button -->
+                {% set is_saved = job.id in saved_ids %}
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-save-job {% if is_saved %}btn-primary-light text-primary{% else %}btn-outline-custom{% endif %}"
+                  data-job-id="{{ job.id }}"
+                  data-saved="{{ 'true' if is_saved else 'false' }}"
+                  data-job-title="{{ job.title }}"
+                  data-job-company="{{ job.company }}"
+                  data-job-location="{{ job.location }}"
+                  data-job-score="{{ job.match_score }}"
+                  data-job-type="{{ job.employment_type }}"
+                  data-job-date="{{ job.posted_date }}"
+                  data-job-url="{{ job.source_url or job.url or '' }}"
+                  data-job-source-url="{{ job.source_url or '' }}"
+                  data-job-source="{{ job.source_name or job.source }}"
+                  data-job-source-name="{{ job.source_name or job.source }}"
+                  data-job-is-demo="{{ 'true' if job.is_demo else 'false' }}"
+                >
+                  {% if is_saved %}
+                    <i class="bi bi-bookmark-fill text-primary"></i> Saved
+                  {% else %}
+                    <i class="bi bi-bookmark"></i> Save Job
+                  {% endif %}
+                </button>
+              </div>
+
+              <!-- Direct External Job Application Link -->
+              <div>
+                {% if job.is_demo or not job.source_url %}
+                  <button class="btn btn-secondary btn-sm disabled" disabled title="Demo Job — Application link unavailable">
+                    <i class="bi bi-slash-circle me-1"></i> Demo Job — Application link unavailable
+                  </button>
+                {% else %}
+                  <a 
+                    href="{{ job.source_url }}" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="btn btn-primary-custom btn-sm px-3 fw-semibold shadow-sm"
+                    title="Redirect to official job posting on {{ job.source_name or job.source }}"
+                  >
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Apply Now &bull; View & Apply on {{ job.source_name or job.source }}
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <!-- Empty State -->
+        <div class="card card-custom p-5 text-center">
+          <div class="mb-3 text-muted" style="font-size: 3rem;">
+            <i class="bi bi-search"></i>
+          </div>
+          <h4 class="fw-bold">No Matching Job Openings Found</h4>
+          <p class="text-muted mx-auto mb-4" style="max-width: 500px;">
+            No current openings met your search criteria for role "<strong>{{ role_query }}</strong>" in location "<strong>{{ location }}</strong>". Try lowering the minimum match score or selecting another location.
+          </p>
+          <div>
+            <a href="{{ url_for('resume.analysis') }}" class="btn btn-primary-custom">
+              <i class="bi bi-sliders me-1"></i> Adjust Search Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Floating Job Comparison Bar -->
+<div id="compareFloatingBar" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 p-3 bg-white border rounded-pill shadow-lg d-none z-3 d-flex align-items-center gap-3">
+  <span class="fw-bold text-dark ms-2">
+    <span id="compareCount" class="badge bg-primary rounded-pill">0</span> Jobs Selected
+  </span>
+  <button id="compareSubmitBtn" class="btn btn-primary-custom btn-sm rounded-pill px-3" disabled>
+    <i class="bi bi-layout-split me-1"></i> Compare Side-by-Side
+  </button>
+</div>
+{% endblock %}

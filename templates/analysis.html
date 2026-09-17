@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Analysis Profile — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Page Title Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">Resume Analysis & Profile</h2>
+      <p class="text-muted mb-0">
+        Parsed from document: <span class="fw-semibold text-primary">{{ analysis.filename }}</span>
+      </p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <a href="{{ url_for('resume.upload') }}" class="btn btn-outline-custom btn-sm">
+        <i class="bi bi-arrow-repeat me-1"></i> Upload Different Resume
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Detected Profile Entities & Interactive Skill Editor -->
+    <div class="col-lg-7">
+      <!-- Entity Overview Card -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-person-check text-primary"></i> Extracted Profile Overview
+        </h5>
+
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded border h-100">
+              <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Education Detected</span>
+              <span class="fw-bold text-dark">{{ analysis.education or "Not specified" }}</span>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="p-3 bg-light rounded border h-100">
+              <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Experience Level</span>
+              <span class="fw-bold text-dark">{{ analysis.experience or "Fresher / Entry-level" }}</span>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 bg-light rounded border">
+              <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Detected Resume Location</span>
+              {% if analysis.candidate_location %}
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                  <span class="fw-bold text-dark fs-6">{{ analysis.candidate_location }}</span>
+                  {% if analysis.normalized_location and analysis.normalized_location != analysis.candidate_location %}
+                    <span class="badge bg-secondary-subtle text-secondary small">(Normalized: {{ analysis.normalized_location }})</span>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="text-warning small d-flex align-items-center gap-1">
+                  <i class="bi bi-exclamation-triangle"></i>
+                  <span>Location could not be detected from your resume. Please select a search location below.</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="p-3 bg-light rounded border">
+              <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Certifications Detected</span>
+              {% if analysis.certifications and analysis.certifications|length > 0 and analysis.certifications[0] != "None detected" %}
+                <ul class="list-unstyled mb-0 small text-dark">
+                  {% for cert in analysis.certifications %}
+                    <li><i class="bi bi-patch-check text-primary me-1"></i> {{ cert }}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <span class="text-muted small">No formal certifications detected in resume text.</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Skills Tag Editor -->
+      <div class="card card-custom p-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-tools text-primary"></i> Candidate Skills
+          </h5>
+          <span class="badge bg-primary-light text-primary fw-semibold" id="skillsCountBadge">
+            {{ analysis.skills|length }} Skills
+          </span>
+        </div>
+        
+        <p class="text-muted small mb-3">
+          Our NLP engine extracted these skills from your resume. Because automated parsing may miss a specific tool or include an extra keyword, you can easily add or remove skills below.
+        </p>
+
+        <!-- Current Skills Tags (Editable) -->
+        <div class="p-3 bg-light rounded border mb-3" id="skillsTagsContainer">
+          {% for skill in analysis.skills %}
+            <span class="skill-tag skill-tag-matched skill-tag-removable">
+              <span class="skill-name">{{ skill }}</span>
+              <i class="bi bi-x-circle ms-1 remove-skill-icon" title="Remove skill"></i>
+            </span>
+          {% endfor %}
+        </div>
+
+        <!-- Add Skill Form -->
+        <div class="input-group mb-2">
+          <input type="text" id="newSkillInput" class="form-control" placeholder="Type a skill name (e.g. Docker, AWS, React)..." />
+          <button class="btn btn-outline-custom" type="button" id="addSkillBtn">
+            <i class="bi bi-plus-lg me-1"></i> Add Skill
+          </button>
+        </div>
+        <div id="skillsSaveStatus" class="small"></div>
+      </div>
+    </div>
+
+    <!-- Right Column: Suggested Roles & Job Search Query -->
+    <div class="col-lg-5">
+      <!-- Suggested Roles -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-2 d-flex align-items-center gap-2">
+          <i class="bi bi-stars text-warning"></i> Suggested Job Roles
+        </h5>
+        <p class="text-muted small mb-3">
+          Based on your detected technical profile, our system identified these matching career paths:
+        </p>
+
+        <div class="d-flex flex-wrap gap-2">
+          {% for role in analysis.suggested_roles %}
+            <button type="button" class="btn btn-sm btn-outline-primary suggested-role-btn" onclick="selectRole('{{ role }}')">
+              <i class="bi bi-check-lg me-1"></i> {{ role }}
+            </button>
+          {% else %}
+            <span class="text-muted small">General Software Engineer</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Job Search Form -->
+      <div class="card card-custom p-4 border-primary">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-search text-primary"></i> Search Matching Jobs
+        </h5>
+
+        <form action="{{ url_for('jobs.list_jobs') }}" method="POST">
+          <!-- Role -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Preferred Job Role</label>
+            <input 
+              type="text" 
+              name="role" 
+              id="jobRoleInput" 
+              class="form-control" 
+              value="{{ analysis.suggested_roles[0] if analysis.suggested_roles else 'Software Engineer' }}" 
+              required 
+            />
+          </div>
+
+          <!-- Location -->
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-bold text-dark mb-0">Job Search Location</label>
+              {% if analysis.primary_city %}
+                <span class="badge bg-success-light text-success border border-success-subtle small">
+                  <i class="bi bi-geo-alt me-1"></i> From Resume: {{ analysis.primary_city }}
+                </span>
+              {% else %}
+                <span class="badge bg-warning-light text-dark small">Please select location</span>
+              {% endif %}
+            </div>
+            <select name="location" class="form-select">
+              <option value="Bengaluru" {% if analysis.primary_city == 'Bengaluru' or not analysis.primary_city %}selected{% endif %}>Bengaluru, Karnataka</option>
+              <option value="Hyderabad" {% if analysis.primary_city == 'Hyderabad' %}selected{% endif %}>Hyderabad, Telangana</option>
+              <option value="Chennai" {% if analysis.primary_city == 'Chennai' %}selected{% endif %}>Chennai, Tamil Nadu</option>
+              <option value="Mumbai" {% if analysis.primary_city == 'Mumbai' %}selected{% endif %}>Mumbai, Maharashtra</option>
+              <option value="Delhi" {% if analysis.primary_city == 'Delhi' %}selected{% endif %}>Delhi / NCR</option>
+              <option value="Pune" {% if analysis.primary_city == 'Pune' %}selected{% endif %}>Pune, Maharashtra</option>
+              <option value="Kolkata" {% if analysis.primary_city == 'Kolkata' %}selected{% endif %}>Kolkata, West Bengal</option>
+              <option value="Remote">Remote (Anywhere)</option>
+              <option value="All">All Locations</option>
+            </select>
+            <div class="form-text small text-muted mt-1">
+              <i class="bi bi-info-circle me-1"></i> Jobs are filtered strictly based on your selected location. Remote jobs may also be shown.
+            </div>
+          </div>
+
+          <!-- Experience Level -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Experience Level</label>
+            <select name="experience_level" class="form-select">
+              <option value="All" selected>All Experience Levels</option>
+              <option value="Fresher">Fresher / Entry-Level (0-1 yrs)</option>
+              <option value="Junior">1-3 Years</option>
+              <option value="Mid">3-5 Years</option>
+              <option value="Senior">5+ Years</option>
+            </select>
+          </div>
+
+          <!-- Job Type -->
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Employment Type</label>
+            <select name="job_type" class="form-select">
+              <option value="All" selected>All Types (Full-time / Internship / Remote)</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Internship">Internship</option>
+              <option value="Remote">Remote</option>
+              <option value="Part-time">Part-time</option>
+            </select>
+          </div>
+
+          <!-- Number of Results -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-dark">Results to Evaluate</label>
+            <select name="limit" class="form-select">
+              <option value="10">Top 10 Openings</option>
+              <option value="20" selected>Top 20 Openings</option>
+              <option value="50">Top 50 Openings</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary-custom w-100 py-2 shadow-sm">
+            <i class="bi bi-lightning-charge me-1"></i> Find Matching Jobs
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function selectRole(roleName) {
+    const input = document.getElementById("jobRoleInput");
+    if (input) {
+      input.value = roleName;
+      input.focus();
+    }
+  }
+</script>
+{% endblock %}

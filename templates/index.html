@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}JobMatch AI — AI-Based Resume Analysis & Job Recommendation System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-center">
+  <div class="container">
+    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 mb-3 rounded-pill bg-white border shadow-sm">
+      <span class="badge rounded-pill bg-primary">AIML Project</span>
+      <span class="small text-secondary fw-semibold">TF-IDF &bull; Cosine Similarity &bull; Skill-Gap Intelligence</span>
+    </div>
+    
+    <h1 class="hero-title">
+      JobMatch <span style="color: var(--primary);">AI</span>
+    </h1>
+    <h2 class="h5 fw-normal text-muted mt-2">
+      AI-Based Resume Analysis and Job Recommendation System
+    </h2>
+    <p class="hero-subtitle">
+      Upload your resume and discover job opportunities that match your skills through intelligent natural language processing and mathematical relevance scoring.
+    </p>
+    
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+      <a href="{{ url_for('resume.upload') }}" class="btn btn-primary-custom btn-lg px-4 shadow-sm">
+        <i class="bi bi-cloud-arrow-up me-2"></i> Upload Resume
+      </a>
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-outline-custom btn-lg px-4">
+        <i class="bi bi-speedometer2 me-2"></i> View Dashboard
+      </a>
+    </div>
+    
+    <div class="mt-4">
+      <small class="text-muted">
+        <i class="bi bi-check2-circle text-success me-1"></i> Supports text-based PDF, DOCX, & TXT
+        <span class="mx-2">&bull;</span>
+        <i class="bi bi-shield-check text-success me-1"></i> Transparent Mathematical Scoring
+      </small>
+    </div>
+  </div>
+</section>
+
+<!-- System Architecture & How It Works -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h3 class="fw-bold">How the Recommendation Engine Works</h3>
+      <p class="text-muted">A structured, multi-stage NLP & Machine Learning pipeline</p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Step 1 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-light text-primary mb-3" style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <h5 class="fw-bold mb-2">1. Resume Parsing</h5>
+          <p class="text-muted small mb-0">
+            Securely extracts plain text from multi-page PDFs, Word documents, or plain text files using standard text decoders.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-light text-primary mb-3" style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="bi bi-search"></i>
+          </div>
+          <h5 class="fw-bold mb-2">2. NLP Entity Extraction</h5>
+          <p class="text-muted small mb-0">
+            Identifies candidate skills across technologies, detects education credentials (B.Tech, BCA, etc.), and estimates experience level.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-light text-primary mb-3" style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="bi bi-diagram-3"></i>
+          </div>
+          <h5 class="fw-bold mb-2">3. TF-IDF & Cosine Math</h5>
+          <p class="text-muted small mb-0">
+            Converts resume and live job descriptions into n-gram TF-IDF vectors, evaluating cosine distance for semantic relevance.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-4">
+          <div class="d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-light text-primary mb-3" style="width: 48px; height: 48px; font-size: 1.3rem;">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+          <h5 class="fw-bold mb-2">4. Ranking & Skill Gaps</h5>
+          <p class="text-muted small mb-0">
+            Produces ranked recommendations showing matched vs missing skills, plus frequency analytics of in-demand market skills.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AIML Methodology & Viva Explanation Section -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="badge bg-primary-light text-primary fw-semibold px-3 py-1 mb-2">AIML Methodology</span>
+        <h3 class="fw-bold mb-3">Transparent Dual-Score Matching Model</h3>
+        <p class="text-secondary mb-3">
+          Unlike black-box models or randomized percentages, JobMatch AI uses an explainable dual-metric formula combining natural language vector semantics with direct skill overlap:
+        </p>
+        
+        <div class="card bg-light border-0 p-3 mb-4 rounded-3">
+          <div class="fw-bold text-dark mb-1">Mathematical Relevance Formula:</div>
+          <code class="text-primary fs-6">
+            Final Relevance Score = (Text Similarity &times; 0.60) + (Skill Overlap Ratio &times; 0.40)
+          </code>
+        </div>
+        
+        <ul class="list-unstyled text-secondary small mb-0">
+          <li class="mb-2 d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle text-success mt-1"></i>
+            <span><strong>TF-IDF Vectorization:</strong> Weighs informative technical keywords using term frequency and inverse document frequency.</span>
+          </li>
+          <li class="mb-2 d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle text-success mt-1"></i>
+            <span><strong>Cosine Similarity:</strong> Computes the cosine of the angle between two sparse vectors in high-dimensional feature space.</span>
+          </li>
+          <li class="d-flex align-items-start gap-2">
+            <i class="bi bi-check-circle text-success mt-1"></i>
+            <span><strong>Skill Overlap Matrix:</strong> Calculates the exact proportion of employer-required skills satisfied by the candidate.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card card-custom p-4">
+          <h5 class="fw-bold mb-3">Sample Matching Output</h5>
+          
+          <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark">Python Backend Developer</span>
+              <span class="badge-score badge-score-high">84.5% Match</span>
+            </div>
+            <div class="small text-muted mb-2">Bengaluru, India &bull; Full-time</div>
+            
+            <div class="mb-2">
+              <div class="text-muted small fw-semibold mb-1">Matched Skills:</div>
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> Python</span>
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> Flask</span>
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> SQL</span>
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> Git</span>
+            </div>
+            
+            <div>
+              <div class="text-muted small fw-semibold mb-1">Skill Gap (Missing):</div>
+              <span class="skill-tag skill-tag-missing"><i class="bi bi-exclamation-circle"></i> Docker</span>
+              <span class="skill-tag skill-tag-missing"><i class="bi bi-exclamation-circle"></i> AWS</span>
+            </div>
+          </div>
+          
+          <div class="disclaimer-banner mb-0">
+            <i class="bi bi-shield-exclamation me-1"></i>
+            <strong>Decision-Support Notice:</strong> Relevance scores reflect profile alignment to job descriptions and do not guarantee hiring outcomes.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="py-5 text-center">
+  <div class="container">
+    <div class="card card-custom p-5 border-0 shadow-sm" style="background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%); color: white;">
+      <h3 class="fw-bold text-white mb-2">Ready to Analyze Your Resume?</h3>
+      <p class="text-white-50 mb-4 mx-auto" style="max-width: 600px;">
+        Upload your PDF or DOCX file, review your extracted skill profile, and find relevant job postings right away.
+      </p>
+      <div>
+        <a href="{{ url_for('resume.upload') }}" class="btn btn-light btn-lg fw-bold text-primary px-4 shadow">
+          <i class="bi bi-file-earmark-arrow-up me-1"></i> Get Started Now
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

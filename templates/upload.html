@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Resume — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Breadcrumb / Header -->
+      <div class="text-center mb-4">
+        <h2 class="fw-bold">Upload Your Resume</h2>
+        <p class="text-muted">
+          Our natural language processing engine supports text-based PDF, DOCX, and TXT documents up to 5 MB.
+        </p>
+      </div>
+
+      <!-- Upload Card -->
+      <div class="card card-custom p-4 p-md-5">
+        <form action="{{ url_for('resume.upload') }}" method="POST" enctype="multipart/form-data" id="resumeUploadForm">
+          <!-- Drag & Drop Zone -->
+          <div class="upload-dropzone mb-4" id="uploadDropzone">
+            <div class="upload-icon">
+              <i class="bi bi-cloud-arrow-up-fill"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Drag and drop your resume file here</h5>
+            <p class="text-muted small mb-3">or click to browse from your computer</p>
+            
+            <input type="file" name="resume" id="resumeFileInput" class="d-none" accept=".pdf,.docx,.txt" required />
+            
+            <button type="button" class="btn btn-outline-custom btn-sm">
+              <i class="bi bi-folder2-open me-1"></i> Choose File
+            </button>
+            
+            <!-- File selected notification -->
+            <div id="selectedFileName"></div>
+          </div>
+
+          <!-- Upload guidelines -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-4">
+              <div class="p-3 bg-light rounded text-center small h-100 border">
+                <i class="bi bi-filetype-pdf text-danger fs-5 d-block mb-1"></i>
+                <strong>PDF Format</strong>
+                <div class="text-muted">Text-based PDF only</div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="p-3 bg-light rounded text-center small h-100 border">
+                <i class="bi bi-filetype-docx text-primary fs-5 d-block mb-1"></i>
+                <strong>DOCX Format</strong>
+                <div class="text-muted">MS Word documents</div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="p-3 bg-light rounded text-center small h-100 border">
+                <i class="bi bi-file-text text-secondary fs-5 d-block mb-1"></i>
+                <strong>Plain Text</strong>
+                <div class="text-muted">Standard TXT files</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="text-center">
+            <button type="submit" id="submitUploadBtn" class="btn btn-primary-custom btn-lg px-5 shadow-sm" disabled>
+              <i class="bi bi-cpu me-2"></i> Upload & Analyze Resume
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sample Resumes Hint for Viva / Testing -->
+      <div class="card card-custom mt-4 p-3 bg-light border-0">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-lightbulb text-warning fs-3"></i>
+          <div class="small text-secondary">
+            <strong>Testing / College Viva Demonstration:</strong>
+            Sample resumes are available in the <code>sample_resumes/</code> project folder (e.g. <code>sample_python_developer.pdf</code>, <code>sample_data_analyst.docx</code>, <code>sample_frontend_dev.txt</code>) for instant end-to-end testing.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

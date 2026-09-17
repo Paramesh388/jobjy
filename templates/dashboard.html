@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — JobMatch AI{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Dashboard Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">My JobMatch Dashboard</h2>
+      <p class="text-muted mb-0">
+        AIML Profile Analytics, Market Skill Gaps & Saved Positions
+      </p>
+    </div>
+    <div class="mt-2 mt-md-0 d-flex gap-2">
+      <a href="{{ url_for('resume.upload') }}" class="btn btn-outline-custom btn-sm">
+        <i class="bi bi-cloud-arrow-up me-1"></i> New Resume
+      </a>
+      <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary-custom btn-sm">
+        <i class="bi bi-search me-1"></i> Job Search
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Overview Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-label">Skills Detected</div>
+        <div class="stat-value text-primary">
+          {{ analysis.skills|length if analysis else 0 }}
+        </div>
+        <small class="text-muted">Extracted from resume</small>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-label">Strong Matches (>70%)</div>
+        <div class="stat-value text-success">
+          {{ strong_matches_count }}
+        </div>
+        <small class="text-muted">High-relevance jobs</small>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-label">Saved Jobs</div>
+        <div class="stat-value" style="color: #6366f1;">
+          {{ stats.saved_jobs_count }}
+        </div>
+        <small class="text-muted">In your bookmarks</small>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="stat-card">
+        <div class="stat-label">Total Searches Run</div>
+        <div class="stat-value text-dark">
+          {{ stats.user_searches }}
+        </div>
+        <small class="text-muted">Logged in database</small>
+      </div>
+    </div>
+  </div>
+
+  {% if analysis %}
+    <div class="row g-4 mb-4">
+      <!-- Candidate Profile Summary & Skills -->
+      <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i>Active Profile</h5>
+            <span class="badge bg-light text-dark border">{{ analysis.filename }}</span>
+          </div>
+
+          <div class="mb-3 small">
+            <div class="row g-2">
+              <div class="col-6">
+                <strong>Education:</strong> {{ analysis.education }}
+              </div>
+              <div class="col-6">
+                <strong>Experience:</strong> {{ analysis.experience }}
+              </div>
+            </div>
+          </div>
+
+          <h6 class="fw-bold text-secondary mb-2 small text-uppercase">Detected Skills ({{ analysis.skills|length }}):</h6>
+          <div class="p-3 bg-light rounded border mb-3 flex-grow-1" style="max-height: 180px; overflow-y: auto;">
+            {% for s in analysis.skills %}
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> {{ s }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="text-end">
+            <a href="{{ url_for('resume.analysis') }}" class="btn btn-outline-custom btn-sm">
+              <i class="bi bi-pencil me-1"></i> Edit Profile & Skills
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Skill Gap Analytics Chart -->
+      <div class="col-lg-6">
+        <div class="card card-custom p-4 h-100">
+          <h5 class="fw-bold mb-1"><i class="bi bi-graph-up text-warning me-2"></i>Market Skill Gap Frequency</h5>
+          <p class="text-muted small mb-3">
+            Top technologies demanded by employers that are currently missing from your resume:
+          </p>
+
+          {% if skill_gaps %}
+            <div style="height: 220px;">
+              <canvas id="skillGapChart"></canvas>
+            </div>
+          {% else %}
+            <div class="p-4 bg-light rounded text-center text-muted">
+              <i class="bi bi-check-all text-success fs-3 d-block mb-1"></i>
+              No prominent skill gaps identified for your search queries yet!
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended Openings Quick View -->
+    {% if recent_jobs %}
+    <div class="card card-custom p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-star-fill text-warning me-2"></i>Top Job Matches</h5>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-sm btn-outline-custom">View All Jobs &rarr;</a>
+      </div>
+
+      <div class="row g-3">
+        {% for job in recent_jobs %}
+          <div class="col-md-6 col-lg-4">
+            <div class="p-3 bg-light rounded border h-100 d-flex flex-column justify-content-between">
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                  <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width: 70%;">
+                    {% if job.source_url %}
+                      <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="job-title-link" title="Open official job posting">{{ job.title }}</a>
+                    {% else %}
+                      {{ job.title }}
+                    {% endif %}
+                  </h6>
+                  <span class="badge-score {{ job.match_score|score_badge_class }}" style="font-size: 0.78rem;">
+                    {{ job.match_score }}%
+                  </span>
+                </div>
+                <div class="small text-muted mb-2">{{ job.company }} &bull; {{ job.location }}</div>
+              </div>
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                <span class="small text-muted">{{ job.employment_type }}</span>
+                {% if job.is_demo or not job.source_url %}
+                  <button class="btn btn-secondary btn-sm disabled py-1 px-2" disabled style="font-size: 0.78rem;">
+                    Demo Job
+                  </button>
+                {% else %}
+                  <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-custom btn-sm py-1 px-2 fw-semibold" style="font-size: 0.78rem;" title="Redirect to official job posting">
+                    Apply Now <i class="bi bi-box-arrow-up-right ms-1"></i>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  {% else %}
+    <div class="card card-custom p-5 text-center">
+      <i class="bi bi-file-earmark-arrow-up text-primary fs-1 mb-2"></i>
+      <h4 class="fw-bold">No Resume Uploaded Yet</h4>
+      <p class="text-muted mx-auto mb-4" style="max-width: 480px;">
+        Upload your resume to activate your personalized AIML dashboard, skill analysis, and job recommendations.
+      </p>
+      <div>
+        <a href="{{ url_for('resume.upload') }}" class="btn btn-primary-custom">Upload Resume Now</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if skill_gaps and skill_gaps|length > 0 %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById("skillGapChart");
+    if (!ctx) return;
+
+    const labels = {{ skill_gaps|map(attribute='skill')|list|tojson }};
+    const dataVals = {{ skill_gaps|map(attribute='demand_percentage')|list|tojson }};
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "% Demand in Recommended Jobs",
+          data: dataVals,
+          backgroundColor: "rgba(245, 158, 11, 0.75)",
+          borderColor: "rgba(245, 158, 11, 1)",
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              callback: function(value) { return value + "%"; }
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  });
+</script>
+{% endif %}
+{% endblock %}

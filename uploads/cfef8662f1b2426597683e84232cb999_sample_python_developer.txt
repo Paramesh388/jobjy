@@ -1,0 +1,41 @@
+ROHAN SHARMA
+Bengaluru, Karnataka | rohan.sharma@example.com | +91 9876543210
+GitHub: github.com/rohansharma-dev | LinkedIn: linkedin.com/in/rohansharma
+
+PROFESSIONAL SUMMARY
+Motivated and detail-oriented Software Engineer with 2 years of experience developing robust web applications and RESTful APIs using Python, Flask, and SQL. Solid understanding of Object-Oriented Programming, database optimization, and Git version control.
+
+EDUCATION
+Bachelor of Technology (B.Tech) in Computer Science and Engineering
+Visvesvaraya Technological University, Bengaluru (2020 - 2024)
+CGPA: 8.4/10
+
+TECHNICAL SKILLS
+- Programming Languages: Python, JavaScript, C++
+- Web Technologies: Flask, HTML, CSS, REST API, Bootstrap
+- Databases: SQL, PostgreSQL, MySQL, SQLite
+- Cloud & Tools: Git, GitHub, Linux, Docker, Postman
+- Concepts: Data Structures, Algorithms, OOP
+
+WORK EXPERIENCE
+Software Developer
+Apex Technologies, Bengaluru (July 2024 - Present)
+- Developed scalable backend services and REST APIs using Python and Flask for a fintech dashboard.
+- Designed database schemas in PostgreSQL and optimized SQL queries, reducing query response times by 25%.
+- Implemented user authentication and role-based access control (RBAC).
+- Collaborated with frontend engineers to integrate REST APIs with responsive HTML/CSS/JavaScript components.
+- Maintained code repositories with Git and participated in CI/CD pipeline deployments.
+
+PROJECTS
+1. E-Commerce Inventory & Order Management System
+   - Built a full-stack web application using Python, Flask, SQLite, and HTML/CSS.
+   - Designed REST APIs for inventory tracking, order status updates, and automated notifications.
+   - Deployed on Linux VPS with Nginx and Git.
+
+2. Student Academic Performance Analyzer
+   - Processed academic records using Python and Pandas.
+   - Built an interactive dashboard visualizing performance trends with Matplotlib.
+
+CERTIFICATIONS
+- Python for Everybody Specialization (Coursera)
+- AWS Certified Cloud Practitioner

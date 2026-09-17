@@ -1,0 +1,5 @@
+RAHUL VERMA
+Bengaluru, Karnataka, India
+Senior Full Stack Python & React Developer
+Skills: Python, Django, Flask, React, JavaScript, Docker, AWS, PostgreSQL, REST API
+Experience: 4 years designing distributed web systems.

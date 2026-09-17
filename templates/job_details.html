@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} at {{ job.company }} — Match Details{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="mb-3">
+    <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-outline-custom btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Recommendations
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Details Column -->
+    <div class="col-lg-8">
+      <div class="card card-custom p-4 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+          <div>
+            <h2 class="fw-bold mb-1">
+              {% if job.source_url %}
+                <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="job-title-link" title="Click to open official job posting">
+                  {{ job.title }}
+                  <i class="bi bi-box-arrow-up-right small text-primary ms-2" style="font-size: 1.1rem;"></i>
+                </a>
+              {% else %}
+                {{ job.title }}
+              {% endif %}
+            </h2>
+            <div class="h5 text-secondary fw-semibold mb-2">{{ job.company }}</div>
+            <div class="text-muted small">
+              <span class="me-3"><i class="bi bi-geo-alt-fill text-danger"></i> {{ job.location }}</span>
+              <span class="me-3"><i class="bi bi-briefcase"></i> {{ job.employment_type }}</span>
+              <span class="me-3"><i class="bi bi-calendar3"></i> Posted: {{ job.posted_date }}</span>
+              <span><i class="bi bi-link-45deg"></i> Source: {{ job.source_name or job.source }}</span>
+            </div>
+          </div>
+
+          <div class="text-end">
+            <div class="badge-score {{ job.match_score|score_badge_class }} fs-5">
+              <i class="bi bi-lightning-fill"></i> {{ job.match_score }}% Match
+            </div>
+            <div class="small text-muted mt-1">Relevance Score</div>
+          </div>
+        </div>
+
+        <hr />
+
+        <h5 class="fw-bold mb-3">Job Description</h5>
+        <div class="text-secondary mb-4" style="line-height: 1.8; white-space: pre-line;">
+          {{ job.description }}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 pt-3 border-top">
+          {% if job.is_demo or not job.source_url %}
+            <button class="btn btn-secondary disabled" disabled title="Demo Job — Application link unavailable">
+              <i class="bi bi-slash-circle me-1"></i> Demo Job — Application link unavailable
+            </button>
+          {% else %}
+            <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-custom px-4 fw-semibold shadow-sm" title="Redirect to official job posting">
+              <i class="bi bi-box-arrow-up-right me-1"></i> Apply Now &bull; View & Apply on {{ job.source_name or job.source }}
+            </a>
+          {% endif %}
+          
+          <button 
+            type="button" 
+            class="btn btn-save-job {% if is_saved %}btn-primary-light text-primary{% else %}btn-outline-custom{% endif %}"
+            data-job-id="{{ job.id }}"
+            data-saved="{{ 'true' if is_saved else 'false' }}"
+            data-job-title="{{ job.title }}"
+            data-job-company="{{ job.company }}"
+            data-job-location="{{ job.location }}"
+            data-job-score="{{ job.match_score }}"
+            data-job-type="{{ job.employment_type }}"
+            data-job-date="{{ job.posted_date }}"
+            data-job-url="{{ job.source_url or job.url or '' }}"
+            data-job-source-url="{{ job.source_url or '' }}"
+            data-job-source="{{ job.source_name or job.source }}"
+            data-job-source-name="{{ job.source_name or job.source }}"
+            data-job-is-demo="{{ 'true' if job.is_demo else 'false' }}"
+          >
+            {% if is_saved %}
+              <i class="bi bi-bookmark-fill text-primary"></i> Saved
+            {% else %}
+              <i class="bi bi-bookmark"></i> Save Job
+            {% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: AIML Mathematical Breakdown -->
+    <div class="col-lg-4">
+      <!-- Scoring Breakdown Card -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-calculator text-primary"></i> Score Breakdown
+        </h5>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>TF-IDF Text Similarity (60% weight)</span>
+            <span class="text-primary">{{ job.text_similarity_pct }}%</span>
+          </div>
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-primary" style="width: {{ job.text_similarity_pct }}%;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small fw-bold mb-1">
+            <span>Skill Overlap Ratio (40% weight)</span>
+            <span class="text-success">{{ job.skill_match_pct }}%</span>
+          </div>
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-success" style="width: {{ job.skill_match_pct }}%;"></div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-light rounded border small text-muted mb-0">
+          <strong>Calculation:</strong><br />
+          <code>({{ job.text_similarity_pct }} &times; 0.60) + ({{ job.skill_match_pct }} &times; 0.40) = {{ job.match_score }}%</code>
+        </div>
+      </div>
+
+      <!-- Skills Breakdown Card -->
+      <div class="card card-custom p-4">
+        <h5 class="fw-bold mb-3">Skills Comparison</h5>
+
+        <div class="mb-3">
+          <div class="small fw-semibold text-success mb-1">
+            <i class="bi bi-check-circle-fill me-1"></i> Matched Skills ({{ job.matched_skills|length }})
+          </div>
+          <div>
+            {% for s in job.matched_skills %}
+              <span class="skill-tag skill-tag-matched"><i class="bi bi-check2"></i> {{ s }}</span>
+            {% else %}
+              <span class="text-muted small">None directly overlapping</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <div class="small fw-semibold text-warning mb-1">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> Missing / In-Demand ({{ job.missing_skills|length }})
+          </div>
+          <div>
+            {% for s in job.missing_skills %}
+              <span class="skill-tag skill-tag-missing"><i class="bi bi-dot"></i> {{ s }}</span>
+            {% else %}
+              <span class="text-success small"><i class="bi bi-award me-1"></i> All detected skills satisfied</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

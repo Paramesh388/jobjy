@@ -1,0 +1,28 @@
+PRIYA NAIR
+Chennai, India | priya.nair@example.com | +91 9123456780
+Portfolio: priyanair.dev | GitHub: github.com/priyanair
+
+SUMMARY
+Frontend Engineer with 1.5 years of experience building modern, responsive, and accessible user interfaces. Specialized in JavaScript, React, HTML5, CSS3, and Bootstrap.
+
+EDUCATION
+Bachelor of Computer Applications (BCA)
+Madras University, Chennai (2020 - 2023)
+
+TECHNICAL SKILLS
+- Languages: JavaScript, TypeScript, HTML, CSS
+- Frameworks: React, Bootstrap, Tailwind CSS, jQuery
+- Tools: Git, GitHub, VS Code, Figma
+- APIs & Databases: REST API, JSON, MongoDB
+
+EXPERIENCE
+Junior Frontend Developer
+Creative Pixels Studio, Chennai (Jan 2023 - Present)
+- Built interactive single-page applications using React and JavaScript.
+- Integrated REST APIs with backend services and optimized client-side rendering.
+- Implemented mobile-first designs with CSS3 and Bootstrap.
+- Used Git for team collaboration and code reviews.
+
+PROJECTS
+- Weather & Travel Planning Web App (React, JavaScript, CSS, REST API)
+- Task Management Board (JavaScript, HTML, CSS, LocalStorage)

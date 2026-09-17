@@ -1,0 +1,5 @@
+ROHAN SHARMA
+Bengaluru, India
+B.Tech in Computer Science
+Skills: Python, Flask, SQL, Git, Docker, REST API
+Experience: 2 Years as Software Developer at Tech Corp.

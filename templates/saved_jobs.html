@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}My Saved Jobs — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">My Saved Jobs</h2>
+      <p class="text-muted mb-0">
+        Review and manage your bookmarked job opportunities.
+      </p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary-custom btn-sm">
+        <i class="bi bi-search me-1"></i> Browse More Jobs
+      </a>
+    </div>
+  </div>
+
+  {% if saved_jobs and saved_jobs|length > 0 %}
+    <div class="row g-3">
+      {% for job in saved_jobs %}
+        <div class="col-md-6 col-lg-4 saved-job-card-col" style="transition: opacity 0.25s ease;">
+          <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="job-title mb-0 text-truncate" title="{{ job.title }}">
+                  {% if job.source_url %}
+                    <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="job-title-link" title="Open official job posting">{{ job.title }}</a>
+                  {% else %}
+                    {{ job.title }}
+                  {% endif %}
+                </h5>
+                <span class="badge-score {{ job.match_score|score_badge_class }}" style="font-size: 0.8rem;">
+                  {{ job.match_score }}% Match
+                </span>
+              </div>
+
+              <div class="job-company mb-2">
+                <i class="bi bi-building me-1"></i> {{ job.company }}
+              </div>
+
+              <div class="text-muted small mb-3">
+                <div class="mb-1"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {{ job.location }}</div>
+                <div class="mb-1"><i class="bi bi-briefcase me-1"></i> {{ job.employment_type }}</div>
+                <div class="mb-1"><i class="bi bi-clock-history me-1"></i> Posted: {{ job.posted_date }}</div>
+                <div><i class="bi bi-link-45deg me-1"></i> Source: {{ job.source_name or job.source }}</div>
+              </div>
+
+              <!-- Matched skills preview -->
+              {% if job.matched_skills %}
+                <div class="mb-3">
+                  <div class="small fw-semibold text-success mb-1">Matched Skills:</div>
+                  {% for s in job.matched_skills[:4] %}
+                    <span class="skill-tag skill-tag-matched" style="font-size: 0.75rem;">{{ s }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top gap-2">
+              <button 
+                type="button" 
+                class="btn btn-outline-danger btn-sm btn-save-job"
+                data-job-id="{{ job.job_id }}"
+                data-saved="true"
+              >
+                <i class="bi bi-trash3 me-1"></i> Remove
+              </button>
+
+              {% if job.is_demo or not job.source_url %}
+                <button class="btn btn-secondary btn-sm disabled" disabled title="Demo Job — Application link unavailable">
+                  <i class="bi bi-slash-circle me-1"></i> Demo Job
+                </button>
+              {% else %}
+                <a 
+                  href="{{ job.source_url }}" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  class="btn btn-primary-custom btn-sm px-3 fw-semibold"
+                  title="Redirect to official job posting"
+                >
+                  Apply Now <i class="bi bi-box-arrow-up-right ms-1"></i>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card card-custom p-5 text-center">
+      <div class="text-muted mb-3" style="font-size: 3rem;">
+        <i class="bi bi-bookmark-dash"></i>
+      </div>
+      <h4 class="fw-bold">No Saved Jobs Yet</h4>
+      <p class="text-muted mx-auto mb-4" style="max-width: 450px;">
+        When exploring recommended openings, click the "Save Job" button on any card to bookmark it for later review.
+      </p>
+      <div>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary-custom">
+          <i class="bi bi-search me-1"></i> Explore Recommended Jobs
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

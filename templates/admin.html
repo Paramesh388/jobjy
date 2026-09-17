@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}System Log & Audit — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-journal-code text-primary me-2"></i>System Application Logs &amp; System Audit</h2>
+      <p class="text-muted mb-0">
+        Live application event stream, system audit trail, API telemetry, query history, and NLP skills taxonomy.
+      </p>
+    </div>
+    <div class="mt-2 mt-md-0 d-flex gap-2">
+      <span class="badge bg-light text-secondary border p-2">
+        <i class="bi bi-database me-1"></i> SQLite Database Engine
+      </span>
+      <span class="badge bg-success-light text-success border border-success-subtle p-2">
+        <i class="bi bi-activity me-1"></i> Telemetry Active
+      </span>
+    </div>
+  </div>
+
+  <!-- Metric Statistics -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-4">
+      <div class="stat-card">
+        <div class="stat-label">System Lifecycle Events</div>
+        <div class="stat-value text-primary">{{ system_logs|length }}</div>
+        <small class="text-muted">Recorded application events</small>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="stat-card">
+        <div class="stat-label">Total System Searches</div>
+        <div class="stat-value text-success">{{ stats.total_searches }}</div>
+        <small class="text-muted">Historical search queries</small>
+      </div>
+    </div>
+    <div class="col-sm-4">
+      <div class="stat-card">
+        <div class="stat-label">Catalog Taxonomy Skills</div>
+        <div class="stat-value" style="color: #6366f1;">{{ total_catalog_skills }}</div>
+        <small class="text-muted">Recognized tech skills</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-Time System Event Logs (Full Width) -->
+  <div class="card card-custom p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-cpu text-primary"></i> Live Application Event Stream
+      </h5>
+      <span class="small text-muted">Latest 50 events</span>
+    </div>
+
+    {% if system_logs and system_logs|length > 0 %}
+      <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead class="table-light sticky-top">
+            <tr>
+              <th style="width: 170px;">Timestamp</th>
+              <th style="width: 190px;">Event</th>
+              <th>Details</th>
+              <th style="width: 100px;" class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in system_logs %}
+              <tr>
+                <td class="small text-muted" style="font-family: monospace;">{{ log.created_at[:19] if log.created_at else 'Recent' }}</td>
+                <td>
+                  {% if 'Upload' in log.event_type %}
+                    <span class="badge bg-primary-light text-primary border border-primary-subtle"><i class="bi bi-cloud-arrow-up me-1"></i>{{ log.event_type }}</span>
+                  {% elif 'Analyzed' in log.event_type or 'Location' in log.event_type %}
+                    <span class="badge bg-info-subtle text-dark border border-info-subtle"><i class="bi bi-person-badge me-1"></i>{{ log.event_type }}</span>
+                  {% elif 'API' in log.event_type or 'Filtered' in log.event_type %}
+                    <span class="badge bg-light text-dark border"><i class="bi bi-broadcast me-1"></i>{{ log.event_type }}</span>
+                  {% elif 'Matched' in log.event_type %}
+                    <span class="badge bg-success-light text-success border border-success-subtle"><i class="bi bi-lightning-fill me-1"></i>{{ log.event_type }}</span>
+                  {% elif 'Save' in log.event_type %}
+                    <span class="badge bg-warning-light text-dark border border-warning-subtle"><i class="bi bi-bookmark-fill me-1"></i>{{ log.event_type }}</span>
+                  {% else %}
+                    <span class="badge bg-light text-secondary border">{{ log.event_type }}</span>
+                  {% endif %}
+                </td>
+                <td class="small text-dark">{{ log.details }}</td>
+                <td class="text-center">
+                  {% if log.status == 'SUCCESS' %}
+                    <span class="badge bg-success"><i class="bi bi-check2"></i> Success</span>
+                  {% elif log.status == 'ERROR' %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Error</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Info</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="p-4 bg-light rounded text-center text-muted">
+        <i class="bi bi-inbox fs-3 d-block mb-1"></i>
+        No system events logged yet. Upload a resume or search for jobs to populate this log.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Search Query Logs -->
+    <div class="col-lg-7">
+      <div class="card card-custom p-4 h-100">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-clock-history text-primary"></i> Search Audit History
+        </h5>
+
+        {% if search_history and search_history|length > 0 %}
+          <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+            <table class="table table-hover table-sm align-middle mb-0">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th>Time</th>
+                  <th>Role Query</th>
+                  <th>Location</th>
+                  <th>Results</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in search_history %}
+                  <tr>
+                    <td class="small text-muted">{{ log.searched_at[:19] if log.searched_at else 'Recent' }}</td>
+                    <td class="fw-semibold text-dark">{{ log.query_role }}</td>
+                    <td class="small">{{ log.location }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ log.total_found }}</span></td>
+                    <td class="small">
+                      {% if 'DEMO' in log.source_used %}
+                        <span class="text-warning fw-semibold">Demo</span>
+                      {% else %}
+                        <span class="text-primary fw-semibold">Live API</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-4 bg-light rounded text-center text-muted">
+            No search logs recorded yet. Run a job search from the recommendations page to generate audit entries.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Skills Catalog Taxonomy -->
+    <div class="col-lg-5">
+      <div class="card card-custom p-4 h-100">
+        <h5 class="fw-bold mb-2 d-flex align-items-center gap-2">
+          <i class="bi bi-tags text-primary"></i> NLP Skills Taxonomy
+        </h5>
+        <p class="text-muted small mb-3">
+          Categorized keywords recognized by the NLP entity extraction dictionary:
+        </p>
+
+        <div class="accordion" id="skillsCatalogAccordion" style="max-height: 320px; overflow-y: auto;">
+          {% for category, skills in categorized_skills.items() %}
+            <div class="accordion-item border mb-2 rounded overflow-hidden">
+              <h2 class="accordion-header" id="heading_{{ loop.index }}">
+                <button class="accordion-button collapsed py-2 px-3 fw-semibold small bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ loop.index }}" aria-expanded="false">
+                  {{ category }} <span class="badge bg-secondary ms-2">{{ skills|length }}</span>
+                </button>
+              </h2>
+              <div id="collapse_{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#skillsCatalogAccordion">
+                <div class="accordion-body p-3">
+                  <div class="d-flex flex-wrap gap-1">
+                    {% for s in skills %}
+                      <span class="skill-tag skill-tag-neutral" style="font-size: 0.76rem;">{{ s }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

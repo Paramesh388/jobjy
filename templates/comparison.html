@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Multiple Job Comparison — JobMatch AI{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+    <div>
+      <h2 class="fw-bold mb-1">Side-by-Side Job Comparison</h2>
+      <p class="text-muted mb-0">
+        Comparing candidate resume skills against {{ jobs|length }} selected job postings.
+      </p>
+    </div>
+    <div class="mt-2 mt-md-0">
+      <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-outline-custom btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Recommendations
+      </a>
+    </div>
+  </div>
+
+  {% if jobs and jobs|length > 0 %}
+    <div class="card card-custom overflow-hidden mb-4 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-bordered comparison-table mb-0 align-middle">
+          <!-- Table Header: Job Names -->
+          <thead>
+            <tr>
+              <th style="min-width: 200px; width: 25%;" class="bg-light">Criteria / Skills</th>
+              {% for job in jobs %}
+                <th class="text-center" style="min-width: 220px;">
+                  <div class="fw-bold text-dark fs-6">
+                    {% if job.source_url %}
+                      <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="job-title-link" title="Open official job posting">{{ job.title }}</a>
+                    {% else %}
+                      {{ job.title }}
+                    {% endif %}
+                  </div>
+                  <div class="small text-muted">{{ job.company }}</div>
+                  <div class="small text-muted mb-1"><i class="bi bi-geo-alt"></i> {{ job.location }}</div>
+                  <div class="small text-muted mb-2"><i class="bi bi-link-45deg"></i> {{ job.source_name or job.source }}</div>
+                  <div class="badge-score {{ job.match_score|score_badge_class }} mb-2">
+                    {{ job.match_score }}% Match
+                  </div>
+                  <div>
+                    {% if job.is_demo or not job.source_url %}
+                      <button class="btn btn-secondary btn-sm disabled py-1 px-2" disabled style="font-size: 0.78rem;" title="Demo Job — Application link unavailable">
+                        <i class="bi bi-slash-circle me-1"></i> Demo Job
+                      </button>
+                    {% else %}
+                      <a href="{{ job.source_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary-custom btn-sm py-1 px-3 fw-semibold shadow-sm" style="font-size: 0.82rem;" title="Redirect to official job posting">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Apply Now
+                      </a>
+                    {% endif %}
+                  </div>
+                </th>
+              {% endfor %}
+            </tr>
+          </thead>
+
+          <tbody>
+            <!-- Summary Stats -->
+            <tr class="table-light fw-semibold">
+              <td>Relevance Score Breakdown</td>
+              {% for job in jobs %}
+                <td class="text-center small">
+                  <div>Text Similarity: <strong>{{ job.text_similarity_pct }}%</strong></div>
+                  <div>Skill Overlap: <strong>{{ job.skill_match_pct }}%</strong></div>
+                </td>
+              {% endfor %}
+            </tr>
+
+            <tr class="table-light fw-semibold">
+              <td>Employment Type</td>
+              {% for job in jobs %}
+                <td class="text-center small">{{ job.employment_type }}</td>
+              {% endfor %}
+            </tr>
+
+            <!-- Skills Rows -->
+            <tr class="table-secondary">
+              <td colspan="{{ jobs|length + 1 }}" class="fw-bold small text-uppercase">
+                <i class="bi bi-tools me-1"></i> Skills Requirement & Overlap Matrix
+              </td>
+            </tr>
+
+            {% for skill in all_skills %}
+              <tr>
+                <td class="fw-semibold">
+                  <span>{{ skill }}</span>
+                  {% if skill in candidate_skills %}
+                    <span class="badge bg-success-light text-success border border-success-subtle ms-1" style="font-size: 0.7rem;">On Resume</span>
+                  {% endif %}
+                </td>
+
+                {% for job in jobs %}
+                  <td class="text-center">
+                    {% if skill in job.matched_skills %}
+                      <span class="text-success fw-bold fs-5" title="Candidate has this required skill">
+                        <i class="bi bi-check-circle-fill"></i>
+                      </span>
+                    {% elif skill in job.missing_skills %}
+                      <span class="text-warning fw-bold fs-5" title="Skill required by job but missing from resume">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                      </span>
+                    {% else %}
+                      <span class="text-muted" title="Not explicitly required">&mdash;</span>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="card card-custom p-3 bg-light border-0">
+      <div class="d-flex flex-wrap gap-4 align-items-center small text-secondary">
+        <span class="fw-bold text-dark">Comparison Legend:</span>
+        <span><i class="bi bi-check-circle-fill text-success fs-6 me-1"></i> Matched (Candidate Possesses Skill)</span>
+        <span><i class="bi bi-exclamation-circle-fill text-warning fs-6 me-1"></i> Missing / In-Demand (Skill Gap)</span>
+        <span><strong class="text-muted">&mdash;</strong> Not Listed in Job Requirements</span>
+      </div>
+    </div>
+  {% else %}
+    <div class="card card-custom p-5 text-center">
+      <h5 class="fw-bold">No jobs selected for comparison</h5>
+      <p class="text-muted">Return to the recommendations list and select 2 or more jobs using the "Compare" checkboxes.</p>
+      <div>
+        <a href="{{ url_for('jobs.list_jobs') }}" class="btn btn-primary-custom">Go to Recommendations</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
